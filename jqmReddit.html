@@ -1,0 +1,149 @@
+<!DOCTYPE html> 
+<html> 
+    <head> 
+    <title>jqmReddit</title> 
+    <meta name="viewport" content="width=device-width, initial-scale=1"> 
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css" />
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js"></script>
+</head> 
+
+<style>
+    html, body, div[data-role=page] {
+        height: 100%
+    }
+    .content-primary {
+        position: absolute;
+        right: 0;
+        width: 60%;
+        top: 42px;
+        border: none;
+    }
+    .content-secondary {
+        position:absolute;
+        width: 40%;
+        border-right: 1px solid;
+        top: 42px;
+        left: 0;
+        bottom: 4px;
+        overflow: auto;
+    }
+    .ui-content .content-secondary .ui-listview {
+        margin: 0px;
+    }
+</style>
+
+<script type="text/javascript">
+    (function ($) {
+        $.fn.change_swatch = function (swatch) {
+            return this.each(function () {
+                    var $this = $(this);
+                    var cur_theme = $this.attr('data-theme');
+                    $this
+                        .filter('.ui-btn-hover-' + cur_theme)
+                        .removeClass('ui-btn-hover-' + cur_theme)
+                        .addClass('ui-btn-hover-' + swatch)
+                        .end()
+
+                        .filter('.ui-btn-down-' + cur_theme)
+                        .removeClass('ui-btn-down-' + cur_theme)
+                        .addClass('ui-btn-down-' + swatch)
+                        .end()
+
+                        .filter('.ui-btn-up-' + cur_theme)
+                        .removeClass('ui-btn-up-' + cur_theme)
+                        .addClass('ui-btn-up-' + swatch)
+                        .end()
+
+                        .filter('.ui-btn-up-' + cur_theme)
+                        .removeClass('ui-btn-up-' + cur_theme)
+                        .addClass('ui-btn-up-' + swatch)
+                        .end()
+
+                        .attr('data-theme', swatch);
+                });
+
+        };
+    })(jQuery);
+
+    update = function (json) {
+        var $ul = $('ul');
+        $ul.html('')
+        for (var i in json.data.children) {
+            var entry = json.data.children[i];
+            var $link = $('<li>').append($('<a target="content">')
+                    .attr('href', entry.data.url)
+                    .text(entry.data.title)
+                    .click(function () {
+                        $('li[data-theme=a], li > a[data-theme=a]').change_swatch('c');
+                        $(this).parentsUntil('ul', 'li').change_swatch('a')
+                        }));
+            if (entry.data.domain.match(/self\.[a-zA-Z_]+/) === null)
+                $link.append($('<a target="content">')
+                        .attr('href', 'http://www.reddit.com' +
+                            entry.data.permalink)
+                        .text(entry.data.num_comments + ' Comments')
+                        .click(function () {
+                            $('li[data-theme=a], li > a[data-theme=a]').change_swatch('c');
+                            $(this).change_swatch('a');
+                            }));
+            $('<span class="ui-li-count">')
+                .text(entry.data.score)
+                .appendTo($link);
+            $ul.append($link);
+            console.log(entry.data)
+        }
+        $('ul').listview('refresh');
+    }
+    $(document).ready(function () {
+        $.getJSON('http://www.reddit.com/.json?callback=?&jsonp=update');
+        $('.content-primary').height($(window).height()-42)
+        $('#refresh').click(function () {
+            $.getJSON('http://www.reddit.com/.json?callback=?&jsonp=update');
+        });
+        $('#toggle_list').click(function () {
+            if ($('.content-secondary').toggle().is(':visible'))
+                $('.content-primary').width('');
+            else
+                $('.content-primary').width('100%');
+            $(this).find('.ui-icon').toggleClass('ui-icon-arrow-l')
+                .toggleClass('ui-icon-arrow-r')
+        });
+    })
+    $(window).resize(function () {
+        $('.content-primary').height($(window).height()-42)
+    });
+</script>
+<body> 
+    <div data-role="page">
+        <div data-role="header" data-position="inline">
+            <a href="#" data-role="button" data-icon="refresh" id="refresh"
+                data-iconpos="notext" class="ui-btn-left" style="left:46px"></a>
+            <a href="#" data-role="button" data-icon="arrow-l" id="toggle_list"
+                data-iconpos="notext" class="ui-btn-left" title="hide/show links"></a>
+            <h1>jqmReddit</h1>
+            <span style="display:none"> <!-- TODO, can't due to reddit jsonp
+                limitatin =[ -->
+            <a href="#" data-role="button" class="ui-btn-right" style="right:118px">
+                Comments</a>
+            <a href="#" data-role="button" data-icon="arrow-u" title="Upvote"
+                data-iconpos="notext" class="ui-btn-right" style="right:82px"></a>
+            <a href="#" data-role="button" data-icon="arrow-d" title="Downvote"
+                data-iconpos="notext" class="ui-btn-right" style="right:46px"></a>
+            <a href="#" data-role="button" data-icon="minus" title="Hide"
+                data-iconpos="notext" class="ui-btn-right"></a>
+            </span>
+        </div>
+
+        <div data-role="content">   
+            <iframe class="content-primary" name="content"></iframe>
+
+            <div class="content-secondary">
+                <ul data-role="listview" data-theme="c" data-dividertheme="d"
+                    data-split-icon="gear">
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
